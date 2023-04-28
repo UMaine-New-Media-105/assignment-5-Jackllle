@@ -1,80 +1,12 @@
-let monkey;
-let banana;
-let particles = [];
-
-let greenColors = ["#5A34B1", "#3D6DA4" ];
-let blueColors = ["#123760", "#1D4560", "#3E2271", "#172262"];
-
-function setup() {
-  createCanvas(400, 400);
-  monkey = new Monkey(100, 100, 20);
-  banana = new Banana(200, 200);
-  particles.push(new Particle(random(width), random(height)));
-}
-
-function draw() {
-  background(143, 143, 216);
-
-  sky();
-  drawTree(width / 2, height - 50, 80, 200);
-  fill("rgb(81,49,111)");
-  rect(0, 380, 1000, 1000);
-  fill(231, 231, 120);
-  ellipse(300, 50, 50, 50);
-  monkey.show();
-  banana.show();
-  // Create new particles
-  if (frameCount % 10 === 0) {
-    particles.push(new Particle(random(width), random(height)));
-  }
-
-  // Update and show particles
-  for (let i = particles.length - 1; i >= 0; i--) {
-    particles[i].update();
-    particles[i].show();
-    if (particles[i].alpha <= 0) {
-      particles.splice(i, 1);
-    }
-  }
-
-}
-
-function drawTree(x, y, height, width) {
-  // Draw trunkA
-  fill(139, 69, 19);
-  rect(x - 10, y - height, 20, width);
-  rect(x - 100, y - 50, 20, width + 100);
-  rect(x + 100, y - 50, 20, width + 100);
-
-  let greenIndex = frameCount % greenColors.length;
-  let greenColor = greenColors[greenIndex];
-
-  // Draw top
-  fill(greenColor);
-  rect(x - 40, y - 240, height, width + 50);
-  rect(x - 130, y - 300, height, width + 50);
-  rect(x - 250, y - 200, height, width);
-  rect(x + 60, y - 200, height + 20, width);
-}
-
-function sky() {
-  let blueIndex = frameCount % blueColors.length;
-  let blueColor = blueColors[blueIndex];
-
-  fill("rgb(1,1,54)");
-  rect(0, 0, 500, 500);
-
-  for (let i = 0; i < particles.length; i++) {
-    particles[i].update();
-    particles[i].show();
-  }
-}
-
 class Monkey {
-  constructor(x, y, radius) {
-    this.x = x;
-    this.y = y;
-    this.radius = radius;
+  constructor(x, y, width, height) {
+    this.x = x || random(width);
+    this.y = y || random(height);
+    this.width = width || 25;
+    this.height = height || 25;
+    this.radius = 20;
+    this.color = color("red");
+    this.score = 0;
   }
 
   show() {
@@ -86,6 +18,26 @@ class Monkey {
     // Ear
     ellipse(this.x - this.radius * 0.8, this.y, this.radius * 1.2);
     ellipse(this.x + 30 - this.radius * 0.8, this.y, this.radius * 1.2);
+  }
+
+  move() {
+    this.x += this.maxSpeed * this.xDir;
+    this.y += this.maxSpeed * this.yDir;
+    if (this.x < 0 || this.x > width) {
+      this.xDir *= -1;
+    }
+    if (this.y < 0 || this.y > height) {
+      this.yDir *= -1;
+    }
+  }
+
+  eat(banana) {
+    let distance = dist(this.x, this.y, banana.x, banana.y);
+    if (distance < this.radius + banana.height - 20) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }
 
@@ -118,40 +70,133 @@ class Banana {
   }
 }
 
-class Particle {
+let monkeys = [];
+let bananas = [];
+let Fireflys=[];
+let timeSinceLastBanana = 0;
+let greenColors = ["#34B134", "#66C66C", "#98D998", "#CAF9CA"]; // Array of different green colors
+let blueColors=["#346FB1", "#669FC6", "#98D8D9", "#CAF0F9"]
+function setup() {
+  createCanvas(500, 400);
+  var x = width / 2;
+  var y = height / 2; 
+  monkeys.push(new Monkey(x, y, 25, 25));
+  bananas.push(new Banana(random(width), random(height)));
+}
+
+function draw() {
+  background("green");
+ Sky();  
+  //stumps
+  fill("#4F2856")
+rect(160,300,10,100)
+rect(250,200,35,1000)
+rect(50,250,15,1000)
+rect(350,270,20,1000)  
+rect(450,150,30,1000) 
+  //moon
+  fill("rgb(240,240,166)")
+  ellipse(50,80,80,80)
+  fill("rgb(0,0,47)")
+  ellipse(70,80,50,50)
+  
+  
+  
+//branch
+fill("rgb(56,63,113)")
+rect(140,100,50,200)
+rect(200,50,125,300)
+rect(5,100,125,150)  
+rect(340,250,50,100)  
+rect(400,-20,500,250)
+  //ground
+  fill("blue")
+  rect(0,380,1000,1000)
+
+  for (let i = monkeys.length - 1; i >= 0; i--) {
+    monkeys[i].show();
+  
+
+    for (let j = bananas.length - 1; j >= 0; j--) {
+      if (monkeys[i].eat(bananas[j])) {
+        bananas.splice(j, 1);
+        monkeys[i].score++;
+        timeSinceLastBanana = 0;
+        if (monkeys[i].score >= 5 && monkeys.length < 100) {
+          let newMonkey = new Monkey(monkeys[i].x, monkeys[i].y);
+          newMonkey.color = color(random(255), random(255), random(255));
+          monkeys.push(newMonkey);
+          monkeys[i].score = 0;
+        }
+      }
+    }
+ 
+
+  for (let i = bananas.length - 1; i >= 0; i--) {
+    bananas[i].show();
+  }
+
+  if (bananas.length < 20) {
+    bananas.push(new Banana(random(width + 10), random(height + 10)));
+  }
+if (frameCount % 5 === 0) {
+    Fireflys.push(new Firefly(random(width), random(height)));
+  }
+
+  // Update and show Fireflys
+  for (let i = Fireflys.length - 1; i >= 0; i--) {
+    Fireflys[i].update();
+    Fireflys[i].show();
+    if (Fireflys[i].alpha <= 0) {
+      Fireflys.splice(i, 1);
+    }
+  }
+
+
+}
+}
+
+
+function Sky() {
+  let blueIndex = frameCount % blueColors.length;
+  let blueColor = blueColors[blueIndex];
+
+  fill("rgb(0,0,47)");
+  rect(0, 0, 500, 500)
+       }
+
+class Firefly {
   constructor(x, y) {
     this.x = x;
     this.y = y;
-    this.vx = random(-1, 1);
-    this.vy = random(-3, -1);
-    this.alpha = 255;
-    this.radius= 1/3
-
+    this.max = 30;
+    this.color = random(blueColors);
+    this.velocity = createVector(random(-2, 2), random(-2, 2));
+    this.alpha = 255; 
+    this.glowRate = random(2, 5); 
   }
 
   update() {
-    this.x += this.vx;
-    this.y += this.vy;
-    this.alpha -= 5;
+    this.x += this.velocity.x;
+    this.y += this.velocity.y;
+
+    if (this.x < 0 || this.x > width) {
+      this.velocity.x *= -1;
+    }
+    if (this.y < 0 || this.y > height) {
+      this.velocity.y *= -1;
+    }
+
+    
+    this.alpha -= this.glowRate;
   }
 
   show() {
-  noStroke();
+    let glowingColor = color("rgb(239,239,191)");
+    glowingColor.setAlpha(this.alpha); 
 
-  // Draw multiple ellipses with increasing size and decreasing opacity
-  for (let i = 0; i < 5; i++) {
-    let glowColor = color(255, 255, 255, this.alpha / 5);
-    fill(glowColor);
-    ellipse(this.x, this.y, 16 + i * 1);
+    fill(glowingColor);
+    noStroke();
+    ellipse(this.x, this.y, 10);
   }
 }
-}
-
-
-
-
-
-
-
-
-
